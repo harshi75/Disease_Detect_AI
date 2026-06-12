@@ -1,7 +1,7 @@
 from disease_info import disease_info
 import streamlit as st
-import pandas as pd
 from predictor import predict_disease
+import joblib
 
 # -------------------------------
 # PAGE CONFIG
@@ -11,6 +11,10 @@ st.set_page_config(
     page_icon="🩺",
     layout="wide"
 )
+
+symptom_columns = joblib.load("symptom_columns.pkl")
+
+symptom_list = sorted(symptom_columns)
 
 # -------------------------------
 # MODERN UI THEME (GRADIENT + GLASS CARDS)
@@ -76,17 +80,6 @@ st.markdown("""
 
 </style>
 """, unsafe_allow_html=True)
-
-# -------------------------------
-# LOAD DATA
-# -------------------------------
-@st.cache_data
-def load_data():
-    return pd.read_csv("dataset.csv")
-
-df = load_data()
-symptom_columns = df.drop("disease", axis=1).columns
-symptom_list = sorted(symptom_columns.tolist())
 
 # -------------------------------
 # HEADER
