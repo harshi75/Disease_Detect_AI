@@ -98,6 +98,7 @@ with col2:
     # -----------------------------------
     # SYMPTOM SELECTION
     # -----------------------------------
+     st.subheader("🔍 Select Symptoms")
 
     selected_symptoms = st.multiselect(
         "Choose Symptoms",
@@ -105,12 +106,6 @@ with col2:
     )
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-    
-
-    st.subheader("🔍 Select Symptoms")
 
     
     predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
