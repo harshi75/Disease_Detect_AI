@@ -103,12 +103,12 @@ with col2:
      selected_symptoms = st.multiselect(
         "Choose Symptoms",
         symptom_list
-    )
+     )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+     st.markdown('</div>', unsafe_allow_html=True)
 
     
-    predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
+     predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
 # -------------------------------
 # INTERACTIVE RESULTS
 # -------------------------------
