@@ -100,7 +100,7 @@ with col2:
     # -----------------------------------
      st.subheader("🔍 Select Symptoms")
 
-    selected_symptoms = st.multiselect(
+     selected_symptoms = st.multiselect(
         "Choose Symptoms",
         symptom_list
     )
