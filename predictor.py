@@ -21,14 +21,14 @@ symptom_columns = df.drop("disease", axis=1).columns
 
 
 def predict_disease(user_symptoms):
-        normalized_symptoms = []
+    normalized_symptoms = []
 
-        for symptom in user_symptoms:
+    for symptom in user_symptoms:
 
-            symptom = symptom.lower()
+        symptom = symptom.lower()
 
-            if symptom in symptom_aliases:
-                symptom = symptom_aliases[symptom]
+        if symptom in symptom_aliases:
+            symptom = symptom_aliases[symptom]
 
             normalized_symptoms.append(symptom)
 
@@ -72,7 +72,10 @@ def predict_disease(user_symptoms):
                 if symptom in disease_symptoms.index:
                     if disease_symptoms[symptom] == 1:
                         matched += 1
-            similarity = matched / len(user_symptoms)
+            if len(user_symptoms) == 0:
+                similarity = 0
+            else:
+                similarity = matched / len(user_symptoms)
 
             similarity_scores.append(similarity)
 
