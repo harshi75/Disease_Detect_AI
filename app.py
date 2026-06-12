@@ -100,12 +100,36 @@ with col2:
 
     st.subheader("🔍 Select Symptoms")
 
-    selected_symptoms = st.multiselect(
-        "Choose symptoms you are experiencing",
-        symptom_list
+    
+    predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
+    # -----------------------------------
+    # SEARCH SYMPTOMS
+    # -----------------------------------
+
+    search = st.text_input(
+        "",
+        placeholder="🔍 Search symptoms (fever, headache, cough...)"
     )
 
-    predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
+    # Filter symptoms based on search
+    if search:
+        filtered_symptoms = [
+            symptom for symptom in symptom_list
+            if search.lower() in symptom.lower()
+        ]
+    else:
+        filtered_symptoms = symptom_list
+
+
+# -----------------------------------
+# SYMPTOM SELECTION
+# -----------------------------------
+
+    selected_symptoms = st.multiselect(
+        "Choose Symptoms",
+        filtered_symptoms,
+        placeholder="Select one or more symptoms"
+    )
 
     st.markdown('</div>', unsafe_allow_html=True)
 
