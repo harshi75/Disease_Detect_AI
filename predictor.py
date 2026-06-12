@@ -1,106 +1,118 @@
-import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
+import os
+
 from symptom_aliases import symptom_aliases
-@st.cache_resource
-def load_model():
 
-    model = joblib.load("best_model.pkl")
-    encoder = joblib.load("label_encoder.pkl")
 
-    return model, encoder
+# ------------------------------
+# FILE PATHS
+# ------------------------------
 
-model, encoder = load_model()
+BASE_DIR = os.path.dirname(__file__)
 
-# Load dataset
-df = pd.read_csv("dataset.csv")
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "best_model.pkl"
+)
 
-# Get symptom columns
-symptom_columns = df.drop("disease", axis=1).columns
+ENCODER_PATH = os.path.join(
+    BASE_DIR,
+    "label_encoder.pkl"
+)
 
+SYMPTOM_PATH = os.path.join(
+    BASE_DIR,
+    "symptom_columns.pkl"
+)
+
+
+# ------------------------------
+# LOAD MODEL FILES
+# ------------------------------
+
+model = joblib.load(MODEL_PATH)
+
+encoder = joblib.load(ENCODER_PATH)
+
+symptom_columns = joblib.load(SYMPTOM_PATH)
+
+
+# ------------------------------
+# PREDICTION FUNCTION
+# ------------------------------
 
 def predict_disease(user_symptoms):
+
+    if not user_symptoms:
+        return []
+
+
+    # Normalize symptom names
     normalized_symptoms = []
 
     for symptom in user_symptoms:
 
-        symptom = symptom.lower()
+        symptom = symptom.lower().strip()
 
         if symptom in symptom_aliases:
             symptom = symptom_aliases[symptom]
 
-            normalized_symptoms.append(symptom)
+        normalized_symptoms.append(symptom)
 
-        user_symptoms = normalized_symptoms
 
-    # Create symptom vector
-        input_data = {}
+    # Create binary symptom vector
+    input_data = {}
 
-        for symptom in symptom_columns:
-            input_data[symptom] = 0
+    for symptom in symptom_columns:
+        input_data[symptom] = 0
 
-    # Mark selected symptoms
-        for symptom in user_symptoms:
 
-            symptom = symptom.lower().strip()
+    for symptom in normalized_symptoms:
 
-            if symptom in input_data:
-                input_data[symptom] = 1
+        if symptom in input_data:
+            input_data[symptom] = 1
 
-    # Convert to dataframe
-        input_df = pd.DataFrame([input_data])
 
-    # Get probabilities
-        probabilities = model.predict_proba(input_df)[0]
-    # Symptom similarity scoring
-        similarity_scores = []
+    # Convert into DataFrame
+    input_df = pd.DataFrame([input_data])
 
-        for index, disease_name in enumerate(encoder.classes_):
 
-            disease_rows = df[df["disease"] == disease_name]
+    # Model prediction probabilities
+    probabilities = model.predict_proba(input_df)[0]
 
-            if len(disease_rows) == 0:
-                similarity_scores.append(0)
-                continue
 
-            disease_symptoms = disease_rows.iloc[0, :-1]
+    # Get top 5 predictions
+    top_indices = np.argsort(probabilities)[-5:][::-1]
 
-            matched = 0
 
-            for symptom in user_symptoms:
-                if symptom in disease_symptoms.index:
-                    if disease_symptoms[symptom] == 1:
-                        matched += 1
-            if len(user_symptoms) == 0:
-                similarity = 0
-            else:
-                similarity = matched / len(user_symptoms)
+    results = []
 
-            similarity_scores.append(similarity)
 
-    # Top 3 predictions
-    # Combine ML probability + similarity
-        final_scores = (
-            0.7 * probabilities +
-            0.3 * np.array(similarity_scores)
+    for index in top_indices:
+
+        disease_name = encoder.inverse_transform(
+            [index]
+        )[0]
+
+
+        confidence = round(
+            probabilities[index] * 100,
+            2
         )
 
-        top_indices = np.argsort(final_scores)[-5:][::-1]
 
-        results = []
+        # Avoid unrealistic 100%
+        confidence = min(confidence, 99.0)
 
-        for index in top_indices:
 
-            disease_name = encoder.inverse_transform([index])[0]
+        results.append(
+            (
+                disease_name,
+                confidence
+            )
+        )
 
-            confidence = final_scores[index] * 100
-            confidence = round(confidence, 2)
 
-            if confidence > 95:
-                confidence = 95
-        
-
-            results.append((disease_name, confidence))
-
-        return results
+    return results
