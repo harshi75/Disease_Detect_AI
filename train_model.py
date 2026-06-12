@@ -2,7 +2,6 @@ import pandas as pd
 import joblib
 
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
@@ -12,27 +11,21 @@ from sklearn.metrics import top_k_accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import VotingClassifier
-from sklearn.metrics import classification_report
 
 # -----------------------------
 # LOAD DATASET
 # -----------------------------
 # Remove rare diseases
 df = pd.read_csv("dataset.csv")
-
-print("\nDisease Statistics:")
-print(df["disease"].value_counts().describe())
-
-# Remove diseases with fewer than 5 samples
-# Count how many times each disease appears
 disease_counts = df["disease"].value_counts()
 
-# Keep only diseases that have at least 5 samples
-valid_diseases = disease_counts[disease_counts >= 10].index
+valid_diseases = disease_counts[
+    disease_counts >= 10
+].index
 
-# Filter dataset
-df = df[df["disease"].isin(valid_diseases)]
+df = df[
+    df["disease"].isin(valid_diseases)
+]
 
 print("Remaining Diseases:", len(valid_diseases))
 # Features (symptoms)
@@ -44,8 +37,7 @@ y = df["disease"]
 # Convert labels into numbers
 encoder = LabelEncoder()
 y_encoded = encoder.fit_transform(y)
-
-# -----------------------------
+#-----------------------------
 # TRAIN TEST SPLIT
 # -----------------------------
 X_train, X_test, y_train, y_test = train_test_split(
@@ -53,21 +45,25 @@ X_train, X_test, y_train, y_test = train_test_split(
     y_encoded,
     test_size=0.2,
     random_state=42,
+    stratify=y_encoded
 )
 
 # -----------------------------
 # MODELS
 # -----------------------------
 models = {
-    "Decision Tree": DecisionTreeClassifier(random_state=42),
-
+    "Decision Tree": DecisionTreeClassifier(),
     "Random Forest": RandomForestClassifier(
-        n_estimators=10,
+        n_estimators=100,
+        max_depth=20,
+        min_samples_split=5,
         random_state=42,
         n_jobs=-1
     ),
     "Naive Bayes": GaussianNB(),
+    
 }
+
 best_model = None
 best_accuracy = 0
 best_model_name = ""
@@ -86,14 +82,6 @@ for name, model in models.items():
     predictions = model.predict(X_test)
     # Normal accuracy
     accuracy = accuracy_score(y_test, predictions)
-    print("\nClassification Report:")
-    print(
-        classification_report(
-            y_test,
-            predictions,
-            zero_division=0
-        )
-    )
 
     print(f"\n{name} Accuracy: {accuracy*100:.2f}%")
 
@@ -110,7 +98,7 @@ for name, model in models.items():
             y_test,
             probabilities,
             k=5,
-            labels=model.classes_
+            labels=range(len(encoder.classes_))
         )
 
         print(f"\nTop-5 Accuracy: {top5*100:.2f}%")
@@ -119,21 +107,7 @@ for name, model in models.items():
     accuracy = accuracy_score(y_test, predictions)
 
     print(f"{name} Accuracy: {accuracy * 100:.2f}%")
-    # Cross Validation
-    #print("\nRunning 5-Fold Cross Validation...")
-
-    #cv_scores = cross_val_score(
-        #model,
-        #X,
-        #y_encoded,
-        #cv=5,
-        #scoring="accuracy"
-        #)
-
-    #print("CV Scores:", cv_scores)
-    #print("Average CV Accuracy:", cv_scores.mean() * 100)
-
-    # Save best model
+# Save best model
     if accuracy > best_accuracy:
         best_accuracy = accuracy
         best_model = model
@@ -144,6 +118,7 @@ for name, model in models.items():
 # -----------------------------
 joblib.dump(best_model, "best_model.pkl")
 joblib.dump(encoder, "label_encoder.pkl")
+joblib.dump(X.columns.tolist(), "symptom_columns.pkl")
 
 print("\n==============================")
 print(f"Best Model: {best_model_name}")
