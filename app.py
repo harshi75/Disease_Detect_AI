@@ -1,95 +1,160 @@
 from disease_info import disease_info
 import streamlit as st
 import pandas as pd
-
 from predictor import predict_disease
 
-# -----------------------------------
-# PAGE SETTINGS
-# -----------------------------------
-
+# -------------------------------
+# PAGE CONFIG
+# -------------------------------
 st.set_page_config(
     page_title="DiseaseDetectAI",
     page_icon="🩺",
-    layout="centered"
+    layout="wide"
 )
 
-# -----------------------------------
-# TITLE
-# -----------------------------------
+# -------------------------------
+# MODERN UI THEME (GRADIENT + GLASS CARDS)
+# -------------------------------
+st.markdown("""
+<style>
 
-st.title("🩺 DiseaseDetectAI")
-st.subheader("AI-Powered Disease Prediction System")
+    /* Background Gradient */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a, #1e293b, #0b1220);
+        color: white;
+    }
 
-st.write(
-    "Select your symptoms below and let the AI predict possible diseases."
-)
+    /* Center container */
+    .main {
+        max-width: 900px;
+        margin: auto;
+    }
 
-# -----------------------------------
+    /* Title */
+    .title {
+        text-align: center;
+        font-size: 46px;
+        font-weight: 800;
+        background: linear-gradient(90deg, #38bdf8, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-top: 20px;
+    }
+
+    .subtitle {
+        text-align: center;
+        font-size: 16px;
+        color: #cbd5e1;
+        margin-bottom: 25px;
+    }
+
+    /* Glass Card */
+    .glass {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 18px;
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        margin-bottom: 15px;
+    }
+
+    /* Button improvement */
+    .stButton > button {
+        background: linear-gradient(90deg, #38bdf8, #a78bfa);
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .stButton > button:hover {
+        transform: scale(1.02);
+        transition: 0.2s;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------------
 # LOAD DATA
-# -----------------------------------
-
+# -------------------------------
 @st.cache_data
 def load_data():
     return pd.read_csv("dataset.csv")
 
 df = load_data()
-
 symptom_columns = df.drop("disease", axis=1).columns
 symptom_list = sorted(symptom_columns.tolist())
 
-# -----------------------------------
-# SYMPTOM SELECTION
-# -----------------------------------
+# -------------------------------
+# HEADER
+# -------------------------------
+st.markdown('<div class="title">🩺 DiseaseDetectAI</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">AI-powered interactive symptom checker</div>', unsafe_allow_html=True)
 
-selected_symptoms = st.multiselect(
-    "Choose Symptoms",
-    symptom_list
-)
+st.divider()
 
-# -----------------------------------
-# PREDICTION
-# -----------------------------------
+# -------------------------------
+# CENTERED INPUT BOX
+# -------------------------------
+col1, col2, col3 = st.columns([1, 2, 1])
 
-if st.button("Predict Disease"):
+with col2:
 
-    if len(selected_symptoms) == 0:
+    st.markdown('<div class="glass">', unsafe_allow_html=True)
 
+    st.subheader("🔍 Select Symptoms")
+
+    selected_symptoms = st.multiselect(
+        "Choose symptoms you are experiencing",
+        symptom_list
+    )
+
+    predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# -------------------------------
+# INTERACTIVE RESULTS
+# -------------------------------
+if predict_btn:
+
+    if not selected_symptoms:
         st.warning("Please select at least one symptom.")
-
     else:
-
         results = predict_disease(selected_symptoms)
 
-        st.subheader("Top Possible Diseases")
+        col1, col2, col3 = st.columns([1, 2, 1])
 
-        for disease, confidence in results:
+        with col2:
 
-            st.success(disease)
+            st.subheader("🧠 AI Analysis Result")
 
-            st.progress(min(int(confidence), 100))
+            for disease, confidence in results:
 
-            st.write(f"Confidence: {confidence:.2f}%")
+                st.markdown(f"""
+                <div class="glass">
+                    <h3 style="color:#38bdf8;">🧬 {disease}</h3>
+                    <p style="color:#cbd5e1;"><b>Confidence:</b> {confidence:.2f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
 
-            info = disease_info.get(disease.lower())
+                st.progress(int(confidence))
 
-            if info:
+                info = disease_info.get(disease.lower())
 
-                st.markdown("### Description")
-                st.write(info["description"])
+                with st.expander("📘 View Medical Insights"):
+                    if info:
+                        st.write("🧾 Description")
+                        st.write(info["description"])
 
-                st.markdown("### Precautions")
+                        st.write("⚠️ Precautions")
+                        for p in info["precautions"]:
+                            st.write("•", p)
 
-                for precaution in info["precautions"]:
-                    st.write("•", precaution)
-
-                st.markdown("### Suggested Treatment")
-                st.write(info["treatment"])
-
-            else:
-
-                st.info(
-                    "Disease information not available yet."
-                )
-
-            st.divider()
+                        st.write("💊 Treatment")
+                        st.write(info["treatment"])
+                    else:
+                        st.info("No medical data available for this condition.")
