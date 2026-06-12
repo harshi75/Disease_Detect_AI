@@ -95,44 +95,25 @@ st.divider()
 col1, col2, col3 = st.columns([1, 2, 1])
 
 with col2:
+    # -----------------------------------
+    # SYMPTOM SELECTION
+    # -----------------------------------
 
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
+    selected_symptoms = st.multiselect(
+        "Choose Symptoms",
+        symptom_list
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+    
 
     st.subheader("🔍 Select Symptoms")
 
     
     predict_btn = st.button("Analyze Symptoms 🚀", use_container_width=True)
-    # -----------------------------------
-    # SEARCH SYMPTOMS
-    # -----------------------------------
-
-    search = st.text_input(
-        "",
-        placeholder="🔍 Search symptoms (fever, headache, cough...)"
-    )
-
-    # Filter symptoms based on search
-    if search:
-        filtered_symptoms = [
-            symptom for symptom in symptom_list
-            if search.lower() in symptom.lower()
-        ]
-    else:
-        filtered_symptoms = symptom_list
-
-
-# -----------------------------------
-# SYMPTOM SELECTION
-# -----------------------------------
-
-    selected_symptoms = st.multiselect(
-        "Choose Symptoms",
-        filtered_symptoms,
-        placeholder="Select one or more symptoms"
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # -------------------------------
 # INTERACTIVE RESULTS
 # -------------------------------
