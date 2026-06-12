@@ -1,5 +1,4 @@
- 
- from disease_info import disease_info
+from disease_info import disease_info
 import streamlit as st
 from predictor import predict_disease
 import joblib
